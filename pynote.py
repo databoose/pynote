@@ -2,13 +2,16 @@ import os
 import readline
 
 from datetime import date
+from datetime import datetime
 
 def writing():
     msg = input("Enter your message\n\n>")
-    with open('journal.txt', 'w') as f:
+    with open('journal.txt', 'a') as f:
         today = date.today()
-        f.write(today.strftime("%B %d, %Y") + '\n')
-        f.write(msg + '\n')
+        f.write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n") # seperator
+        f.write(today.strftime("%B %d, %Y") + " " + "@" + " " + datetime.today().strftime("%I:%M %p") + '\n\n')
+        f.write(msg)
+        f.write('\n')
 
 
 if __name__ == "__main__":
