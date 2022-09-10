@@ -5,13 +5,17 @@ from datetime import date
 from datetime import datetime
 
 def writing():
-    msg = input("Enter your message\n\n>")
-    with open('journal.txt', 'a') as f:
-        today = date.today()
-        f.write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n") # seperator
-        f.write(today.strftime("%B %d, %Y") + " " + "@" + " " + datetime.today().strftime("%I:%M %p") + '\n\n')
-        f.write(msg)
-        f.write('\n')
+    msg = input("Enter your message (type exit to exit)\n\n>")
+    if msg == "exit":
+        quit()
+    else:
+        with open('journal.txt', 'a') as f:
+            today = date.today()
+            f.write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n") # seperator
+            f.write(today.strftime("%B %d, %Y") + " " + "@" + " " + datetime.today().strftime("%I:%M %p") + '\n\n')
+            f.write(msg)
+            f.write('\n')
+            writing()
 
 
 if __name__ == "__main__":
