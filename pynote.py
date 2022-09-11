@@ -18,9 +18,6 @@ def writing():
             main()
 
 def main():
-    print("----------------------------------")
-    print("-PyNote, a python journal logger-")
-    print("----------------------------------")
     cmd = input("Enter command (write, wipe, quit) \n\n>")
     if cmd == "write":
         if os.access("journal.txt", os.R_OK) is True:
