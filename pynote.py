@@ -8,13 +8,13 @@ def writing():
     if msg == "exit":
         quit()
     else:
-        with open('journal.txt', 'a') as f: # open as appending
+        with open('journal.txt', 'a') as fp: # open as appending
             today = date.today()
-            f.write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n") # seperator
-            f.write(today.strftime("%B %d, %Y") + " " + "@" + " " + datetime.today().strftime("%I:%M %p") + '\n\n')
-            f.write(msg)
-            f.write('\n')
-            f.close()
+            fp.write("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n") # seperator
+            fp.write(today.strftime("%B %d, %Y") + " " + "@" + " " + datetime.today().strftime("%I:%M %p") + '\n\n')
+            fp.write(msg)
+            fp.write('\n')
+            fp.close()
             main()
 
 def main():
@@ -29,6 +29,7 @@ def main():
             if answer == "Y":
                 fp = open('journal.txt', 'w')
                 print("journal file has been created\n")
+                fp.close()
                 main()
             elif answer == "N":
                 quit()
