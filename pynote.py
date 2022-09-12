@@ -6,6 +6,7 @@ from datetime import date, datetime
 def readout():
     with open('journal.txt') as fp:
         lines = fp.read()
+        fp.close()
         print("--- Start of File ---")
         print(lines)
         print("--- End of File ---")
