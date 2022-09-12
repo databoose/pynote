@@ -6,7 +6,10 @@ from datetime import date, datetime
 def readout():
     with open('journal.txt') as fp:
         lines = fp.read()
+        print("--- Start of File ---")
         print(lines)
+        print("--- End of File ---")
+        main()
 
 def writing():
     msg = input("Enter your message (type exit to exit)\n\n>")
