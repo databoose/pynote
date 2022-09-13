@@ -2,14 +2,15 @@ import os
 import readline
 
 from datetime import date, datetime
+from termcolor import colored, cprint
 
 def readout():
     with open('journal.txt') as fp:
         lines = fp.read()
         fp.close()
-        print("--- Start of File ---")
-        print(lines)
-        print("--- End of File ---")
+        print(colored("--- Start of File ---",'red'))
+        cprint(lines, "white", "on_grey")
+        print(colored("--- End of File ---","red"))
         main()
 
 def writing():
@@ -23,6 +24,7 @@ def writing():
             fp.write(today.strftime("%B %d, %Y") + " " + "@" + " " + datetime.today().strftime("%I:%M %p") + '\n\n')
             fp.write(msg)
             fp.write('\n')
+            print(colored('Entry written to journal','green'))
             fp.close()
             main()
 
