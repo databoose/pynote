@@ -1,8 +1,16 @@
 import os
 import readline
+import re
 
 from datetime import date, datetime
 from termcolor import colored, cprint
+
+def getblocks():
+    with open('journal.txt') as fp:
+        lines = fp.read()
+        substring = '\n\n'
+        res = len(re.findall(substring, lines)) # 2 \n\n's per block (or entry)
+        return(int(res/2))
 
 def readout():
     with open('journal.txt') as fp:
@@ -11,16 +19,18 @@ def readout():
         print(colored("--- Start of File ---",'red'))
         cprint(lines, "white", "on_grey")
         print(colored("--- End of File ---","red"))
+        print(str(getblocks()) + " " + "entries")
         main()
 
 def writing():
-    msg = input("Enter your message (type exit to exit)\n\n>")
+    msg = input("\nEnter your message (type exit to exit)\n\n>")
     if msg == "exit":
         quit()
     else:
         with open('journal.txt', 'a') as fp: # open as appending
             today = date.today()
             fp.write("\n\n") # seperator
+            fp.write("Entry #" + str(getblocks()+1) + "\n")
             fp.write(today.strftime("%B %d, %Y") + " " + "@" + " " + datetime.today().strftime("%I:%M %p") + '\n\n')
             fp.write(msg)
             fp.write('\n')
