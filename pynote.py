@@ -8,6 +8,7 @@ from termcolor import colored, cprint
 def getblocks():
     with open('journal.txt') as fp:
         lines = fp.read()
+        fp.close()
         substring = '\n\n'
         res = len(re.findall(substring, lines)) # 2 \n\n's per block (or entry)
         return(int(res/2))
@@ -59,13 +60,17 @@ def main():
         confirmation = input("Are you absolutely sure you want to wipe the journal? (Y\\N) \n\n>")
         if confirmation == "Y":
             open("journal.txt" , 'w').close()
-            print("Journal has been wiped")
+            print(colored('Journal has been wiped','green'))
+            main()
         if confirmation == "N":
             main()
     if cmd == "read":
         readout()
     if cmd == "quit":
         quit()
+    else:
+        print(colored('Incorrect command.','red'))
+        main()
 
 if __name__ == "__main__":
     main()
