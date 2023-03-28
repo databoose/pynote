@@ -15,10 +15,26 @@ def getblocks():
 
 def readout():
     with open('journal.txt') as fp:
-        lines = fp.read()
-        fp.close()
         print(colored("--- Start of File ---",'red'))
-        cprint(lines, "white", "on_grey")
+        while True:
+            pos = 0
+            next_line = fp.readline()
+            for pos, value in enumerate(next_line):
+                if value == "(":
+                    recorded_date = ""
+                    while True:
+                        # keep iterating through the string, but recording each character by each iteration
+                        pos += 1
+                        value = next_line[pos]
+                        if value == ")" or (not value.isnumeric() and value != "/"):
+                            break;
+                        recorded_date += value
+                    # print the recorded date
+                    print('Recorded date:', recorded_date)
+            if not next_line:
+                break;
+            print(next_line.strip())
+        fp.close()
         print(colored("--- End of File ---","red"))
         print(str(getblocks()) + " " + "entries")
         main()
@@ -32,7 +48,7 @@ def writing():
             today = date.today()
             fp.write("\n\n") # seperator
             fp.write("Entry #" + str(getblocks()+1) + "\n")
-            fp.write(today.strftime("%B %d, %Y") + " " + "@" + " " + datetime.today().strftime("%I:%M %p") + '\n\n')
+            fp.write(today.strftime("%B %d, %Y") + " " + "(" + today.strftime("%m/%d/%Y") + ")" + " " + "@" + " " + datetime.today().strftime("%I:%M %p") + '\n\n')
             fp.write(msg)
             fp.write('\n')
             print(colored('Entry written to journal','green'))
