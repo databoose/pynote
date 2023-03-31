@@ -17,8 +17,7 @@ def readout():
     with open('journal.txt') as fp:
         print(colored("--- Start of File ---",'red'))
         while True:
-            pos = 0
-            next_line = fp.readline()
+            next_line = fp.readline() #grab new line
             for pos, value in enumerate(next_line):
                 if value == "(":
                     recorded_date = ""
@@ -31,8 +30,24 @@ def readout():
                         recorded_date += value
                     # print the recorded date
                     print('Recorded date:', recorded_date)
+                    pos = 0
+                    value = "" #clear both for next enumeration
+
+            for pos, value in enumerate(next_line):
+                if value == "@":
+                    recorded_time = ""
+                    pos += 1 # 1 extra because we are skipping the space in between "@" and the time
+                    while True:
+                        pos += 1
+                        value = next_line[pos]
+                        if value == "\n": # break at end of line
+                            break;
+                        recorded_time += value
+                    # print the recorded time
+                    print('Recorded time:', recorded_time)
             if not next_line:
                 break;
+
             print(next_line.strip())
         fp.close()
         print(colored("--- End of File ---","red"))
@@ -48,7 +63,7 @@ def writing():
             today = date.today()
             fp.write("\n\n") # seperator
             fp.write("Entry #" + str(getblocks()+1) + "\n")
-            fp.write(today.strftime("%B %d, %Y") + " " + "(" + today.strftime("%m/%d/%Y") + ")" + " " + "@" + " " + datetime.today().strftime("%I:%M %p") + '\n\n')
+            fp.write(today.strftime(today.strftime("%m/%d/%Y")) + " " + "@" + " " + datetime.today().strftime("%I:%M %p") + '\n\n')
             fp.write(msg)
             fp.write('\n')
             print(colored('Entry written to journal','green'))
@@ -58,6 +73,8 @@ def writing():
 def main():
     print("\n")
     cmd = input("Enter command (write, read, wipe, quit)\n\n>")
+    if cmd == "read":
+        readout()
     if cmd == "write":
         if os.access("journal.txt", os.R_OK) is True:
             writing()
@@ -80,8 +97,6 @@ def main():
             main()
         if confirmation == "N":
             main()
-    if cmd == "read":
-        readout()
     if cmd == "quit":
         quit()
     else:
