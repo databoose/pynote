@@ -2,8 +2,12 @@ import os
 import readline
 import re
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from time import strptime
 from termcolor import colored, cprint
+
+def has_numbers(inputString):
+    return any(char.isdigit() for char in inputString)
 
 def getblocks():
     with open('journal.txt') as fp:
@@ -18,36 +22,41 @@ def readout():
         print(colored("--- Start of File ---",'red'))
         while True:
             next_line = fp.readline() #grab new line
-            for pos, value in enumerate(next_line):
-                if value == "(":
-                    recorded_date = ""
+            recorded_date_string = ""
+            recorded_time_string = ""
+            for pos_date, value_date in enumerate(next_line):
+                if value_date == "(":
                     while True:
                         # keep iterating through the string, but recording each character by each iteration
-                        pos += 1
-                        value = next_line[pos]
-                        if value == ")" or (not value.isnumeric() and value != "/"):
+                        pos_date += 1
+                        value_date = next_line[pos_date]
+                        if value_date == ")" or (not value_date.isnumeric() and value_date != "/"):
                             break;
-                        recorded_date += value
-                    # print the recorded date
-                    print('Recorded date:', recorded_date)
-                    pos = 0
-                    value = "" #clear both for next enumeration
+                        recorded_date_string += value_date
+                # print the recorded date
 
-            for pos, value in enumerate(next_line):
+            for pos_time, value in enumerate(next_line):
                 if value == "@":
-                    recorded_time = ""
-                    pos += 1 # 1 extra because we are skipping the space in between "@" and the time
+                    pos_time += 1 # 1 extra because we are skipping the space in between "@" and the time
                     while True:
-                        pos += 1
-                        value = next_line[pos]
+                        pos_time += 1
+                        value = next_line[pos_time]
                         if value == "\n": # break at end of line
                             break;
-                        recorded_time += value
-                    # print the recorded time
-                    print('Recorded time:', recorded_time)
+                        recorded_time_string += value
             if not next_line:
                 break;
-
+            # this runs for each line
+            
+            # print("date : " + repr(recorded_date_string))
+            # print("time : " + repr(recorded_time_string))
+            # print("combination : " + repr(recorded_date_string + " " + recorded_time_string))
+            string_dt = recorded_date_string + " " + recorded_time_string
+            # print(repr(string_dt))
+            if has_numbers(recorded_date_string) == True:
+                object_dt = datetime.strptime(string_dt, '%m/%d/%Y %I:%M %p') #strptime might be converting it just fine, but this value is null for whatever reason
+            else:
+                print("null, not continuing")
             print(next_line.strip())
         fp.close()
         print(colored("--- End of File ---","red"))
@@ -63,7 +72,7 @@ def writing():
             today = date.today()
             fp.write("\n\n") # seperator
             fp.write("Entry #" + str(getblocks()+1) + "\n")
-            fp.write(today.strftime(today.strftime("%m/%d/%Y")) + " " + "@" + " " + datetime.today().strftime("%I:%M %p") + '\n\n')
+            fp.write("(" + today.strftime(today.strftime("%m/%d/%Y")) + ")" + " " + "@" + " " + datetime.today().strftime("%I:%M %p") + '\n\n')
             fp.write(msg)
             fp.write('\n')
             print(colored('Entry written to journal','green'))
