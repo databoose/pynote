@@ -57,7 +57,7 @@ def readout():
                 current_time = datetime.now()
                 print("combination : " + repr(string_dt))
                 object_dt = datetime.strptime(string_dt, '%m/%d/%Y %I:%M %p') #strptime might be converting it just fine, but this value is null for whatever reason
-                #difference = object_dt - date(today.strftime(today.strftime("%m/%d/%Y")) + datetime.today().strftime("%I:%M %p"))
+                time_delta = current_time - object_dt
             print(next_line.strip())
         fp.close()
         print(colored("--- End of File ---","red"))
