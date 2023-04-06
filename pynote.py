@@ -25,7 +25,7 @@ def readout():
             recorded_date_string = ""
             recorded_time_string = ""
             for pos_date, value_date in enumerate(next_line):
-                if value_date == "(":
+                if value_date == "(" and next_line.find("/") != -1 and next_line.find("@") != -1 and (next_line.find("PM") != -1 or next_line.find("AM") != -1):
                     while True:
                         # keep iterating through the string, but recording each character by each iteration
                         pos_date += 1
@@ -36,7 +36,7 @@ def readout():
                 # print the recorded date
 
             for pos_time, value in enumerate(next_line):
-                if value == "@":
+                if value == "@" and next_line.find("/") != -1 and (next_line.find("PM") != -1 or next_line.find("AM") != -1):
                     pos_time += 1 # 1 extra because we are skipping the space in between "@" and the time
                     while True:
                         pos_time += 1
@@ -54,9 +54,10 @@ def readout():
             string_dt = recorded_date_string + " " + recorded_time_string
             # print(repr(string_dt))
             if has_numbers(recorded_date_string) == True:
+                current_time = datetime.now()
+                print("combination : " + repr(string_dt))
                 object_dt = datetime.strptime(string_dt, '%m/%d/%Y %I:%M %p') #strptime might be converting it just fine, but this value is null for whatever reason
-            else:
-                print("null, not continuing")
+                #difference = object_dt - date(today.strftime(today.strftime("%m/%d/%Y")) + datetime.today().strftime("%I:%M %p"))
             print(next_line.strip())
         fp.close()
         print(colored("--- End of File ---","red"))
