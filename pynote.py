@@ -1,48 +1,57 @@
 import os
 import readline
-import re
 
 from datetime import date, datetime, timedelta
 from time import strptime
 from termcolor import colored, cprint
 
+'''
+TODO: 
+    - add search and delete functions
+'''
+
 def getblocks():
+    block_size = 0
     with open('journal.txt') as fp:
-        lines = fp.read()
-        fp.close()
-        substring = '\n\n'
-        res = len(re.findall(substring, lines)) # 2 \n\n's per block (or entry)
-        return(int(res/2))
+        current_line = fp.readline()
+        while current_line: # while current line has contents
+            for current_char in current_line:
+                if current_char == "(" and current_line.find("/") != -1 and current_line.find("@") != -1 and (current_line.find("PM") != -1 or current_line.find("AM") != -1):
+                    block_size += 1
+                    break;
+            current_line = fp.readline()
+    fp.close()
+    return block_size
 
 def readout():
     with open('journal.txt') as fp:
         print(colored("--- Start of File ---",'red'))
         while True:
-            next_line = fp.readline() #grab new line
+            current_line = fp.readline() #grab new line
             recorded_date_string = ""
             recorded_time_string = ""
 
             timestamp_detected = False
-            for pos_date, value_date in enumerate(next_line):
-                if value_date == "(" and next_line.find("/") != -1 and next_line.find("@") != -1 and (next_line.find("PM") != -1 or next_line.find("AM") != -1):
+            for pos_date, value_date in enumerate(current_line):
+                if value_date == "(" and current_line.find("/") != -1 and current_line.find("@") != -1 and (current_line.find("PM") != -1 or current_line.find("AM") != -1):
                     timestamp_detected = True
-                    while True:
+                    while True: 
                         pos_date += 1
-                        value_date = next_line[pos_date]
+                        value_date = current_line[pos_date]
                         if value_date == ")":
                             break;
                         recorded_date_string += value_date
 
-            for pos_time, value in enumerate(next_line):
-                if value == "@" and next_line.find("/") != -1 and (next_line.find("PM") != -1 or next_line.find("AM") != -1):
+            for pos_time, value in enumerate(current_line):
+                if value == "@" and current_line.find("/") != -1 and (current_line.find("PM") != -1 or current_line.find("AM") != -1):
                     pos_time += 1 # 1 extra because we are skipping the space in between "@" and the time
                     while True:
                         pos_time += 1
-                        value = next_line[pos_time]
+                        value = current_line[pos_time]
                         if value == "\n": # break at end of line
                             break;
                         recorded_time_string += value
-            if not next_line:
+            if not current_line: #if current line does not have contents, aka when we are done reading the entire file then break out of while loop
                 break;
  
             if timestamp_detected == True:
@@ -54,10 +63,10 @@ def readout():
                 diff_days = time_delta.days
                 diff_hours = time_delta.seconds // 3600
 
-                print(next_line.strip(), end="") # print without newline so next print is on same line
+                print(current_line.strip(), end="") # print without newline so next print is on same line
                 print(colored(" " + "[" + str(diff_days) + " " + "days and" + " " + str(diff_hours) + " " + "hours passed" + "]", 'green'))
             else:
-                print(next_line.strip())
+                print(current_line.strip())
         fp.close()
         print(colored("--- End of File ---","red"))
         print(str(getblocks()) + " " + "entries")
@@ -71,7 +80,6 @@ def writing():
         with open('journal.txt', 'a') as fp: # open as appending
             today = date.today()
             fp.write("\n\n") # seperator
-            fp.write("Entry #" + str(getblocks()+1) + "\n")
             fp.write("(" + today.strftime(today.strftime("%m/%d/%Y")) + ")" + " " + "@" + " " + datetime.today().strftime("%I:%M %p") + '\n\n')
             fp.write(msg)
             fp.write('\n')
