@@ -7,7 +7,7 @@ from termcolor import colored, cprint
 
 '''
 TODO: 
-    - add search and delete functions
+    - add search, edit and delete functions
 '''
 
 def getblocks():
@@ -88,24 +88,22 @@ def writing():
             main()
 
 def main():
+    if os.access("journal.txt", os.R_OK) is False:
+            print("journal.txt will be created in current directory as it does not exist.\n")
+            answer = input("Is this okay? (Enter Y/N) : ")
+            if answer == "Y":
+                fp = open('journal.txt', 'w')
+                print(colored("Journal file has been created", 'green'))
+                fp.close()
+                main()
+            elif answer == "N":
+                quit()
     print("\n")
     cmd = input("Enter command (write, read, wipe, quit)\n\n>")
     if cmd == "read":
         readout()
     if cmd == "write":
-        if os.access("journal.txt", os.R_OK) is True:
-            writing()
-        
-        elif os.access("journal.txt", os.R_OK) is False:
-            print("journal.txt will be created in current directory as it does not exist.\n")
-            answer = input("Is this okay? (Enter Y/N) : ")
-            if answer == "Y":
-                fp = open('journal.txt', 'w')
-                print("journal file has been created\n")
-                fp.close()
-                main()
-            elif answer == "N":
-                quit()
+        writing()
     if cmd == "wipe":
         confirmation = input("Are you absolutely sure you want to wipe the journal? (Y\\N) \n\n>")
         if confirmation == "Y":
