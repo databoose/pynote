@@ -89,34 +89,35 @@ def writing():
 
 def main():
     if os.access("journal.txt", os.R_OK) is False:
-            print("journal.txt will be created in current directory as it does not exist.\n")
-            answer = input("Is this okay? (Enter Y/N) : ")
-            if answer == "Y":
-                fp = open('journal.txt', 'w')
-                print(colored("Journal file has been created", 'green'))
-                fp.close()
-                main()
-            elif answer == "N":
-                quit()
+        print("journal.txt will be created in current directory as it does not exist.\n")
+        answer = input("Is this okay? (Enter Y/N) : ")
+        if answer == "Y":
+            fp = open('journal.txt', 'w')
+            print(colored("Journal file has been created", 'green'))
+            fp.close()
+            main()
+        elif answer == "N":
+            quit()
+
     print("\n")
     cmd = input("Enter command (write, read, wipe, quit)\n\n>")
-    if cmd == "read":
-        readout()
-    if cmd == "write":
-        writing()
-    if cmd == "wipe":
-        confirmation = input("Are you absolutely sure you want to wipe the journal? (Y\\N) \n\n>")
-        if confirmation == "Y":
-            open("journal.txt" , 'w').close()
-            print(colored('Journal has been wiped','green'))
+    match cmd:
+        case "read":
+            readout()
+        case "write":
+            writing()
+        case "wipe":
+            confirmation = input("Are you absolutely sure you want to wipe the journal? (Y\\N) \n\n>")
+            if confirmation == "Y":
+                open("journal.txt" , 'w').close()
+                print(colored('Journal has been wiped','green'))
+                main()
+            if confirmation == "N":
+                main()
+        case "quit":
+            quit()
+        case _:
+            print(colored('Incorrect command.','red'))
             main()
-        if confirmation == "N":
-            main()
-    if cmd == "quit":
-        quit()
-    else:
-        print(colored('Incorrect command.','red'))
-        main()
-
 if __name__ == "__main__":
     main()
