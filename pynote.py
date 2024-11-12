@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 from time import strptime
 from termcolor import colored, cprint
 
-# TODO: add CLI args, add note labels
+# TODO: add CLI args, delete command, and add note labels
 
 def getblocks():
     block_size = 0
@@ -99,7 +99,8 @@ def search():
                     print()
                 print(message_line.strip() + "\n")
             
-            # Skip the next blank line after the message
+            # skip the next 2 blank lines after the message
+            fp.readline()
             fp.readline()
 
     if not found:
