@@ -5,72 +5,107 @@ from datetime import date, datetime, timedelta
 from time import strptime
 from termcolor import colored, cprint
 
-'''
-TODO: 
-    - add search, edit and delete functions
-'''
+# TODO: add CLI args, add note labels
 
 def getblocks():
     block_size = 0
     with open('journal.txt') as fp:
-        current_line = fp.readline()
-        while current_line: # while current line has contents
-            for current_char in current_line:
-                if current_char == "(" and current_line.find("/") != -1 and current_line.find("@") != -1 and (current_line.find("PM") != -1 or current_line.find("AM") != -1):
+        message = fp.readline()
+        while message: # while current line has contents
+            for current_char in message:
+                if current_char == "(" and message.find("/") != -1 and message.find("@") != -1 and (message.find("PM") != -1 or message.find("AM") != -1):
                     block_size += 1
                     break;
-            current_line = fp.readline()
+            message = fp.readline()
     fp.close()
     return block_size
+
+def parse_timestamp(message):
+    recorded_date_string = ""
+    recorded_time_string = ""
+    timestamp_detected = False
+
+    for pos_date, value_date in enumerate(message):
+        if value_date == "(" and message.find("/") != -1 and message.find("@") != -1 and (message.find("PM") != -1 or message.find("AM") != -1):
+            timestamp_detected = True
+            while True: 
+                pos_date += 1
+                value_date = message[pos_date]
+                if value_date == ")":
+                    break
+                recorded_date_string += value_date
+
+    for pos_time, value in enumerate(message):
+        if value == "@" and message.find("/") != -1 and (message.find("PM") != -1 or message.find("AM") != -1):
+            pos_time += 1
+            while True:
+                pos_time += 1
+                value = message[pos_time]
+                if value == "\n":
+                    break
+                recorded_time_string += value
+
+    if timestamp_detected:
+        string_dt = recorded_date_string + " " + recorded_time_string
+        object_dt = datetime.strptime(string_dt, '%m/%d/%Y %I:%M %p')
+        current_time = datetime.now()
+        time_delta = current_time - object_dt
+        diff_days = time_delta.days
+        diff_hours = time_delta.seconds // 3600
+        return timestamp_detected, diff_days, diff_hours
+    
+    return timestamp_detected, None, None
 
 def readout():
     with open('journal.txt') as fp:
         print(colored("--- Start of File ---",'red'))
         while True:
-            current_line = fp.readline() #grab new line
-            recorded_date_string = ""
-            recorded_time_string = ""
-
-            timestamp_detected = False
-            for pos_date, value_date in enumerate(current_line):
-                if value_date == "(" and current_line.find("/") != -1 and current_line.find("@") != -1 and (current_line.find("PM") != -1 or current_line.find("AM") != -1):
-                    timestamp_detected = True
-                    while True: 
-                        pos_date += 1
-                        value_date = current_line[pos_date]
-                        if value_date == ")":
-                            break;
-                        recorded_date_string += value_date
-
-            for pos_time, value in enumerate(current_line):
-                if value == "@" and current_line.find("/") != -1 and (current_line.find("PM") != -1 or current_line.find("AM") != -1):
-                    pos_time += 1 # 1 extra because we are skipping the space in between "@" and the time
-                    while True:
-                        pos_time += 1
-                        value = current_line[pos_time]
-                        if value == "\n": # break at end of line
-                            break;
-                        recorded_time_string += value
-            if not current_line: #if current line does not have contents, aka when we are done reading the entire file then break out of while loop
-                break;
- 
+            message = fp.readline()
+            if not message:
+                break
+            
+            timestamp_detected, diff_days, diff_hours = parse_timestamp(message)
+            
+            print(message.strip(), end="")
             if timestamp_detected == True:
-                string_dt = recorded_date_string + " " + recorded_time_string
-                object_dt = datetime.strptime(string_dt, '%m/%d/%Y %I:%M %p')
-                
-                current_time = datetime.now()
-                time_delta = current_time - object_dt
-                diff_days = time_delta.days
-                diff_hours = time_delta.seconds // 3600
-
-                print(current_line.strip(), end="") # print without newline so next print is on same line
                 print(colored(" " + "[" + str(diff_days) + " " + "days and" + " " + str(diff_hours) + " " + "hours passed" + "]", 'green'))
             else:
-                print(current_line.strip())
+                print()
         fp.close()
         print(colored("--- End of File ---","red"))
         print(str(getblocks()) + " " + "entries")
         main()
+
+
+def search():
+    search_term = input("\nEnter search term:\n\n>")
+    found = False
+    with open('journal.txt') as fp:
+        while True:
+            timestamp_line = fp.readline()
+            if not timestamp_line:
+                break
+                
+            blank_line = fp.readline()
+            message_line = fp.readline()
+            
+            if search_term in message_line:
+                found = True
+
+                timestamp_detected, diff_days, diff_hours = parse_timestamp(timestamp_line)
+                if timestamp_detected:
+                    print(colored(" " + "[" + str(diff_days) + " " + "days and" + " " + str(diff_hours) + " " + "hours passed" + "]", 'green'))
+                else:
+                    print()
+                print(message_line.strip() + "\n")
+            
+            # Skip the next blank line after the message
+            fp.readline()
+
+    if not found:
+        print(colored("\nNo matches found", 'red'))
+    fp.close()
+    main()
 
 def writing():
     msg = input("\nEnter your message (type exit to exit)\n\n>")
@@ -100,7 +135,7 @@ def main():
             quit()
 
     print("\n")
-    cmd = input("Enter command (write, read, wipe, quit)\n\n>")
+    cmd = input("Enter command (write, read, wipe, search, quit)\n\n>")
     match cmd:
         case "read":
             readout()
@@ -116,6 +151,8 @@ def main():
                 main()
         case "quit":
             quit()
+        case "search":
+            search()
         case _:
             print(colored('Incorrect command.','red'))
             main()
