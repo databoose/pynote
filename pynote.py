@@ -6,16 +6,17 @@ import re
 from datetime import datetime
 from termcolor import colored
 from typing import List, Dict, Optional
+# todo
+# 
+# 
+# add journal "sections" functionality
 
 class JournalManager():
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str): # db path is passed as a parameter upon object instance creation
         self.db_path = db_path
 
-    def open_db(self) -> sqlite3.Connection:
-        return sqlite3.connect(self.db_path)
-
     def init_database(self) -> None:
-        with self.open_db() as db:
+        with sqlite3.connect(self.db_path) as db:
             db.execute("""
                 CREATE TABLE IF NOT EXISTS entries (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,13 +34,13 @@ class JournalManager():
         hours = (delta.seconds // 3600)
         return days, hours
 
-    def load_journal(self) -> List[Dict[str, any]]:
-        with self.open_db() as db:
+    def load_journal(self) -> List[Dict[str, any]]: # keys are strings, values can be any type
+        with sqlite3.connect(self.db_path) as db:
             rows = db.execute("SELECT content, timestamp FROM entries ORDER BY timestamp ASC").fetchall()
         return [{"content": row[0], "timestamp": datetime.fromisoformat(row[1])} for row in rows]
 
     def get_entry_count(self) -> int:
-        with self.open_db() as db:
+        with sqlite3.connect(self.db_path) as db:
             row = db.execute("SELECT COUNT(*) as count FROM entries").fetchone()
         return row[0] if row else 0
 
@@ -131,7 +132,7 @@ class JournalManager():
                     return
 
         try:
-            with self.open_db() as db:
+            with sqlite3.connect(self.db_path) as db:
                 db.execute(
                     "INSERT INTO entries (content, timestamp) VALUES (?, ?)",
                     (msg, datetime.now().isoformat())
@@ -149,7 +150,7 @@ class JournalManager():
                 return
 
         try:
-            with self.open_db() as db:
+            with sqlite3.connect(self.db_path) as db:
                 db.execute("DELETE FROM entries")
             print(colored("Journal has been wiped", "green"))
         except Exception as e:
@@ -260,7 +261,7 @@ def main():
     print_help()
 
     while True:
-        cmd = input("> ").strip()
+        cmd = input("\nEnter command (read, write, wipe, search, help, quit)\n\n>").strip()
         if cmd == "read":
             journal.readout()
         elif cmd == "write":
