@@ -1,4 +1,7 @@
 # pynote
-a python program for making notes marked with the time and date
+a journaling python program with timestamps/time passed
 
-To run, simply right click the "run" file as a program, or with a terminal, in the directory of the script, type "python3 pynote.py" to execute.
+
+# Dependencies
+- python3-termcolor (debian-based)
+- python-termcolor (arch-based)
