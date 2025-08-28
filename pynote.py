@@ -7,8 +7,8 @@ from datetime import datetime
 from termcolor import colored
 from typing import List, Dict, Optional
 # todo
-# 
-# 
+# add reading from a specific entry ID maybe?
+# add edit functionality
 # add journal "sections" functionality
 
 class JournalManager():
@@ -156,6 +156,38 @@ class JournalManager():
         except Exception as e:
             print(colored(f"Error wiping journal: {e}", "red"))
     
+    def replace_entry(self, row_id: int):
+        with sqlite3.connect(self.db_path) as db:
+            cursor = db.cursor()
+            cursor.execute(f'SELECT * FROM {'entries'} WHERE id = ?', (row_id,))
+            row_text = cursor.fetchone() # returns a tuple containing row id, content, and timestamp
+            if not row_text:
+                print(colored(f"No row found for ID {row_id}"))
+                return None
+            else:
+                lines = []
+                print("The original text for this entry : \n\n")
+                print(row_text[1])
+                print("\n Enter in new text (press Ctrl+C to cancel or type '###END###' on a new line to finish\n")
+                try:
+                    while True:
+                        line = input()
+                        if line.strip() == "###END###":
+                            break
+                        lines.append(line)
+                except KeyboardInterrupt:
+                    print(colored("\nEntry cancelled", "yellow"))
+                    return None
+                except EOFError:
+                    print(colored("EOF error in edit_entry(), this should not happen","red"))
+
+                msg = "\n".join(lines)
+                cursor.execute('''
+                           UPDATE entries
+                           SET content = ?
+                           WHERE id = ? ''' , (msg, row_id))
+
+    
     # @staticmethod defines a method that belongs to the class rather than to an instance of this class
     @staticmethod
     def convert_text_journal_to_db(input_file: str = "journal.txt", output_db: str = "journal.db") -> bool:
@@ -207,6 +239,7 @@ def print_help():
     print ("\nCommands : \n")
     print("  read (prints journal)")
     print("  write (writes entry to journal)")
+    print("  replace (replaces a specific entry with new text)")
     print("  wipe (wipes journal)")
     print("  search (searches for term in journal)")
     print("  help (prints this message)")
@@ -257,15 +290,27 @@ def main():
         return
 
     print(colored("\nJournal CLI - Using database", "blue"))
-
     print_help()
 
     while True:
-        cmd = input("\nEnter command (read, write, wipe, search, help, quit)\n\n>").strip()
+        cmd = input("\nEnter command (read, write, replace, wipe, search, help, quit)\n\n>").strip()
         if cmd == "read":
             journal.readout()
         elif cmd == "write":
             journal.write_entry()
+        elif cmd == "replace":
+            entry_num = ask_question("Enter entry number to edit: ").strip()
+            try:
+                entry_num = int(entry_num)
+                if entry_num < 1:
+                    print(colored("Invalid input, entry number must be a positive number"), "red")
+                else:
+                    journal.replace_entry(entry_num)
+            except ValueError:
+                print(colored("Invalid input, enter a number."))
+            except Exception as e:
+                print(f"Exception type: {type(e).__name__}")
+                print(colored(e,"red"))
         elif cmd == "wipe":
             journal.wipe_journal()
         elif cmd == "search":
