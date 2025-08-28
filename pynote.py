@@ -8,7 +8,6 @@ from termcolor import colored
 from typing import List, Dict, Optional
 # todo
 # add reading from a specific entry ID maybe?
-# add edit functionality
 # add journal "sections" functionality
 
 class JournalManager():
@@ -36,9 +35,10 @@ class JournalManager():
 
     def load_journal(self) -> List[Dict[str, any]]: # keys are strings, values can be any type
         with sqlite3.connect(self.db_path) as db:
-            rows = db.execute("SELECT content, timestamp FROM entries ORDER BY timestamp ASC").fetchall()
-        return [{"content": row[0], "timestamp": datetime.fromisoformat(row[1])} for row in rows]
-
+            rows = db.execute("SELECT id, content, timestamp FROM entries ORDER BY timestamp ASC").fetchall()
+        return [{"id": row[0], "content": row[1], "timestamp": datetime.fromisoformat(row[2])} for row in rows]
+    
+    # we wont need this later
     def get_entry_count(self) -> int:
         with sqlite3.connect(self.db_path) as db:
             row = db.execute("SELECT COUNT(*) as count FROM entries").fetchone()
@@ -57,8 +57,11 @@ class JournalManager():
                     timestamp_display = f"({entry['timestamp'].strftime('%m/%d/%Y')}) @ {entry['timestamp'].strftime('%I:%M %p')}"
                     time_passed = f"[{days} days and {hours} hours passed] ({weeks} weeks and {months} months)"
 
-                    print(colored(timestamp_display, "white"))
-                    print(colored(time_passed, "green"))
+                    print(colored(f"[Entry ID : {entry["id"]}]", "blue"))
+                    #print(timestamp_display + " " + colored(f"[Entry ID : {i}]", "blue"))
+                    print(timestamp_display + " " + colored(time_passed, "green"))
+                    #print(colored(time_passed, "green"))
+
                     print()
                     print(entry["content"])
                 else:
@@ -73,6 +76,7 @@ class JournalManager():
         except Exception as e:
             print(colored(f"Error loading database: {e}", "red"))
 
+    # TODO : allow user to search by ID as well
     def search(self, search_term: str) -> None:
         try:
             entries = self.load_journal()
@@ -88,6 +92,7 @@ class JournalManager():
                         timestamp_display = f"({entry['timestamp'].strftime('%m/%d/%Y')}) @ {entry['timestamp'].strftime('%I:%M %p')}"
                         time_passed = f"[{days} days and {hours} hours passed] ({weeks} weeks and {months} months)"
 
+                        print(colored(f"[Entry ID : {entry["id"]}]", "blue"))
                         print(colored(timestamp_display, "white"))
                         print(colored(time_passed, "green"))
                         print()
