@@ -6,8 +6,8 @@ import re
 from datetime import datetime
 from termcolor import colored
 from typing import List, Dict, Optional
+
 # todo
-# add reading from a specific entry ID maybe?
 # add journal "sections" functionality
 
 class JournalManager():
@@ -58,9 +58,7 @@ class JournalManager():
                     time_passed = f"[{days} days and {hours} hours passed] ({weeks} weeks and {months} months)"
 
                     print(colored(f"[Entry ID : {entry["id"]}]", "blue"))
-                    #print(timestamp_display + " " + colored(f"[Entry ID : {i}]", "blue"))
                     print(timestamp_display + " " + colored(time_passed, "green"))
-                    #print(colored(time_passed, "green"))
 
                     print()
                     print(entry["content"])
@@ -76,29 +74,40 @@ class JournalManager():
         except Exception as e:
             print(colored(f"Error loading database: {e}", "red"))
 
-    # TODO : allow user to search by ID as well
-    def search(self, search_term: str) -> None:
+    # TODO make this look cleaner for the user, output is kinda messy
+    def search(self, substr=None, row_id=None) -> None:
         try:
             entries = self.load_journal()
             found = False
 
-            for entry in entries:
-                if search_term.lower() in entry["content"].lower():
-                    found = True
-                    days, hours = self.calculate_time_diff(entry["timestamp"])
-                    if days is not None:
-                        weeks = f"{(days / 7):.1f}"
-                        months = f"{(days / 30):.1f}"
-                        timestamp_display = f"({entry['timestamp'].strftime('%m/%d/%Y')}) @ {entry['timestamp'].strftime('%I:%M %p')}"
-                        time_passed = f"[{days} days and {hours} hours passed] ({weeks} weeks and {months} months)"
+            if substr:
+                for entry in entries:
+                    if substr.lower() in entry["content"].lower():
+                        found = True
+                        days, hours = self.calculate_time_diff(entry["timestamp"])
+                        if days is not None:
+                            weeks = f"{(days / 7):.1f}"
+                            months = f"{(days / 30):.1f}"
+                            timestamp_display = f"({entry['timestamp'].strftime('%m/%d/%Y')}) @ {entry['timestamp'].strftime('%I:%M %p')}"
+                            time_passed = f"[{days} days and {hours} hours passed] ({weeks} weeks and {months} months)"
 
-                        print(colored(f"[Entry ID : {entry["id"]}]", "blue"))
-                        print(colored(timestamp_display, "white"))
-                        print(colored(time_passed, "green"))
-                        print()
-                        print(entry["content"])
-                        print()
+                            print(colored(f"[Entry ID : {entry["id"]}]", "blue"))
+                            print(colored(timestamp_display, "white"))
+                            print(colored(time_passed, "green"))
+                            print()
+                            print(entry["content"])
+                            print()
+            if row_id:
+                with sqlite3.connect(self.db_path) as db:
+                    cursor = db.cursor()
+                    row_content = cursor.execute("SELECT content FROM entries WHERE id = ?", (row_id,)).fetchone()
 
+                    if row_content:
+                        found = True
+                        print(f"Text of entry ID [{row_id}] : \n\n", row_content[0])
+                    else:
+                        found = False
+                        print(f"No row found with ID {row_id}")
             if not found:
                 print(colored("No matches found", "red"))
         except Exception as e:
@@ -192,7 +201,6 @@ class JournalManager():
                            SET content = ?
                            WHERE id = ? ''' , (msg, row_id))
 
-    
     # @staticmethod defines a method that belongs to the class rather than to an instance of this class
     @staticmethod
     def convert_text_journal_to_db(input_file: str = "journal.txt", output_db: str = "journal.db") -> bool:
@@ -319,8 +327,13 @@ def main():
         elif cmd == "wipe":
             journal.wipe_journal()
         elif cmd == "search":
-            search_query = ask_question("Enter string to search for : ")
-            journal.search(search_query)
+            ans = ask_question("Search by entry ID or text? ('string' or 'id'): ")
+            if ans == "string":
+                search_query = ask_question("Enter string to search for: ")
+                journal.search(search_query)
+            elif ans == "id":
+                id = int(ask_question("Enter entry ID : "))
+                journal.search(None, id)
         elif cmd == "help":
             print_help()
         elif cmd == "quit":
