@@ -9,6 +9,7 @@ from typing import List, Dict, Optional
 
 # todo
 # add journal "sections" functionality
+# add delete command
 
 class JournalManager():
     def __init__(self, db_path: str): # db path is passed as a parameter upon object instance creation
@@ -24,9 +25,10 @@ class JournalManager():
                 )
             """)
 
-    def calculate_time_diff(self, timestamp: Optional[datetime]) -> tuple[Optional[int], Optional[int]]:
-        if not timestamp:
-            return None, None
+    def calculate_time_diff(self, timestamp: datetime) -> tuple[int, int]:
+        if not isinstance(timestamp, datetime):
+            print(colored("Error in calculate_time_diff", "red"))
+            raise TypeError(f"Expected datetime, got {type(timestamp).__name__}")
         now = datetime.now()
         delta = now - timestamp
         days = delta.days
@@ -50,22 +52,20 @@ class JournalManager():
             print(colored("--- Start of Journal ---", "red"))
 
             for i, entry in enumerate(entries):
-                days, hours = self.calculate_time_diff(entry["timestamp"])
-                if days is not None:
-                    weeks = f"{(days / 7):.1f}"
-                    months = f"{(days / 30):.1f}"
-                    timestamp_display = f"({entry['timestamp'].strftime('%m/%d/%Y')}) @ {entry['timestamp'].strftime('%I:%M %p')}"
-                    time_passed = f"[{days} days and {hours} hours passed] ({weeks} weeks and {months} months)"
+                days_passed, hours_passed = self.calculate_time_diff(entry["timestamp"])
 
-                    print(colored(f"[Entry ID : {entry["id"]}]", "blue"))
-                    print(timestamp_display + " " + colored(time_passed, "green"))
+                weeks_passed = f"{(days_passed / 7):.1f}"
+                months_passed = f"{(days_passed / 30):.1f}"
+                timestamp_display = f"({entry['timestamp'].strftime('%m/%d/%Y')}) @ {entry['timestamp'].strftime('%I:%M %p')}"
+                time_passed = f"[{days_passed} days and {hours_passed} hours passed] ({weeks_passed} weeks and {months_passed} months)"
 
-                    print()
-                    print(entry["content"])
-                else:
-                    print(entry["content"])
+                print(colored(f"[Entry ID : {entry["id"]}]", "blue"))
+                print(timestamp_display + " " + colored(time_passed, "green"))
 
-                if i < len(entries) - 1:
+                print()
+                print(entry["content"])
+
+                if i < len(entries) - 1: # spacing between each entry
                     print()
 
             print()
@@ -84,19 +84,19 @@ class JournalManager():
                 for entry in entries:
                     if substr.lower() in entry["content"].lower():
                         found = True
-                        days, hours = self.calculate_time_diff(entry["timestamp"])
-                        if days is not None:
-                            weeks = f"{(days / 7):.1f}"
-                            months = f"{(days / 30):.1f}"
-                            timestamp_display = f"({entry['timestamp'].strftime('%m/%d/%Y')}) @ {entry['timestamp'].strftime('%I:%M %p')}"
-                            time_passed = f"[{days} days and {hours} hours passed] ({weeks} weeks and {months} months)"
+                        days_passed, hours_passed = self.calculate_time_diff(entry["timestamp"])
 
-                            print(colored(f"[Entry ID : {entry["id"]}]", "blue"))
-                            print(colored(timestamp_display, "white"))
-                            print(colored(time_passed, "green"))
-                            print()
-                            print(entry["content"])
-                            print()
+                        weeks_passed = f"{(days_passed / 7):.1f}"
+                        months_passed = f"{(days_passed / 30):.1f}"
+                        timestamp_display = f"({entry['timestamp'].strftime('%m/%d/%Y')}) @ {entry['timestamp'].strftime('%I:%M %p')}"
+                        time_passed = f"[{days_passed} days and {hours_passed} hours passed] ({weeks_passed} weeks and {months_passed} months)"
+
+                        print(colored(f"[Entry ID : {entry["id"]}]", "blue"))
+                        print(colored(timestamp_display, "white"))
+                        print(colored(time_passed, "green"))
+                        print()
+                        print(entry["content"])
+                        print()
             if row_id:
                 with sqlite3.connect(self.db_path) as db:
                     cursor = db.cursor()
