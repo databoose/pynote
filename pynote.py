@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 import sqlite3
 import re
@@ -9,21 +10,25 @@ from typing import List, Dict, Optional
 
 # todo
 # add journal "sections" functionality
-# add delete command
+# make search function return properly formatted entry when searching by ID
 
 class JournalManager():
-    def __init__(self, db_path: str): # db path is passed as a parameter upon object instance creation
+    def __init__(self, db_path: str):
         self.db_path = db_path
 
     def init_database(self) -> None:
         with sqlite3.connect(self.db_path) as db:
-            db.execute("""
-                CREATE TABLE IF NOT EXISTS entries (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    content TEXT NOT NULL,
-                    timestamp DATETIME NOT NULL
-                )
-            """)
+            try:
+                db.execute("""
+                    CREATE TABLE IF NOT EXISTS entries (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        content TEXT NOT NULL,
+                        timestamp DATETIME NOT NULL
+                    )
+                """)
+            except Exception as e:
+                 print(colored(f"sqlite error occured, unable to create database : {e}", "red"))
+                 sys.exit()
 
     def calculate_time_diff(self, timestamp: datetime) -> tuple[int, int]:
         if not isinstance(timestamp, datetime):
@@ -36,15 +41,23 @@ class JournalManager():
         return days, hours
 
     def load_journal(self) -> List[Dict[str, any]]: # keys are strings, values can be any type
-        with sqlite3.connect(self.db_path) as db:
-            rows = db.execute("SELECT id, content, timestamp FROM entries ORDER BY timestamp ASC").fetchall()
-        return [{"id": row[0], "content": row[1], "timestamp": datetime.fromisoformat(row[2])} for row in rows]
+        try:
+            with sqlite3.connect(self.db_path) as db:
+                rows = db.execute("SELECT id, content, timestamp FROM entries ORDER BY timestamp ASC").fetchall()
+                return [{"id": row[0], "content": row[1], "timestamp": datetime.fromisoformat(row[2])} for row in rows]
+        except Exception as e:
+            print(colored(f"sqlite error occured, unable to load journal : {e}", e))
+            sys.exit()
     
     # we wont need this later
     def get_entry_count(self) -> int:
-        with sqlite3.connect(self.db_path) as db:
-            row = db.execute("SELECT COUNT(*) as count FROM entries").fetchone()
-        return row[0] if row else 0
+        try:
+            with sqlite3.connect(self.db_path) as db:
+                row = db.execute("SELECT COUNT(*) as count FROM entries").fetchone()
+                return row[0] if row else 0
+        except Exception as e:
+            print(colored(f"sqlite error occured, unable to get entry count : {e}", "red"))
+            return 0
 
     def readout(self) -> None:
         try:
@@ -170,10 +183,28 @@ class JournalManager():
         except Exception as e:
             print(colored(f"Error wiping journal: {e}", "red"))
     
+    def delete_entry(self, row_id: int):
+        with sqlite3.connect(self.db_path) as db:
+            cursor = db.cursor()
+            try:
+                cursor.execute('''
+                                DELETE FROM entries
+                                WHERE id = ? ''' , (row_id,))
+                print(colored(f"Entry {row_id} deleted", "green"))
+            except Exception as e:
+                print(colored(f"sqlite error occured, delete operation failed : {e}", "red"))
+
     def replace_entry(self, row_id: int):
         with sqlite3.connect(self.db_path) as db:
             cursor = db.cursor()
-            cursor.execute(f'SELECT * FROM {'entries'} WHERE id = ?', (row_id,))
+            try:
+                cursor.execute('''
+                            SELECT * FROM
+                            entries
+                            WHERE id = ? ''', (row_id,))
+            except Exception as e:
+                print(colored(f"sqlite error occured : {e}", "red"))
+
             row_text = cursor.fetchone() # returns a tuple containing row id, content, and timestamp
             if not row_text:
                 print(colored(f"No row found for ID {row_id}"))
@@ -196,14 +227,17 @@ class JournalManager():
                     print(colored("EOF error in edit_entry(), this should not happen","red"))
 
                 msg = "\n".join(lines)
-                cursor.execute('''
-                           UPDATE entries
-                           SET content = ?
-                           WHERE id = ? ''' , (msg, row_id))
+                try:
+                    cursor.execute('''
+                            UPDATE entries
+                            SET content = ?
+                            WHERE id = ? ''' , (msg, row_id))
+                except Exception as e:
+                    print(colored(f"sqlite error occured : {e}", "red"))
 
     # @staticmethod defines a method that belongs to the class rather than to an instance of this class
     @staticmethod
-    def convert_text_journal_to_db(input_file: str = "journal.txt", output_db: str = "journal.db") -> bool:
+    def convert_text_journal_to_db(input_file: str = "journal.txt", output_db: str = "journal.db"):
         try:
             with open(input_file, "r") as f:
                 journal_text = f.read()
@@ -240,10 +274,9 @@ class JournalManager():
                         "INSERT INTO entries (content, timestamp) VALUES (?, ?)",
                         (entry["content"], entry["timestamp"].isoformat())
                     )
-            return True
         except Exception as e:
             print(colored(f"Error during migration: {e}", "red"))
-            return False
+            sys.exit()
 
 def ask_question(question: str) -> str:
     return input(question).strip()
@@ -255,6 +288,7 @@ def print_help():
     print("  replace (replaces a specific entry with new text)")
     print("  wipe (wipes journal)")
     print("  search (searches for term in journal)")
+    print("  delete (deletes an entry)")
     print("  help (prints this message)")
     print("  quit (quits program) ")
     print("\n")
@@ -306,7 +340,7 @@ def main():
     print_help()
 
     while True:
-        cmd = input("\nEnter command (read, write, replace, wipe, search, help, quit)\n\n>").strip()
+        cmd = input("\nEnter command (read, write, delete, replace, wipe, search, help, quit)\n\n>").strip()
         if cmd == "read":
             journal.readout()
         elif cmd == "write":
@@ -334,6 +368,14 @@ def main():
             elif ans == "id":
                 id = int(ask_question("Enter entry ID : "))
                 journal.search(None, id)
+            else:
+                print(colored("Incorrect input"), "red")
+        elif cmd == "delete":
+            ans = ask_question("Enter entry ID to delete : ")
+            try:
+                journal.delete_entry(int(ans))
+            except ValueError as ve:
+                print(colored(f"Incorrect type : {ve}"), "red")
         elif cmd == "help":
             print_help()
         elif cmd == "quit":
