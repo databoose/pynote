@@ -187,10 +187,16 @@ class JournalManager():
         with sqlite3.connect(self.db_path) as db:
             cursor = db.cursor()
             try:
-                cursor.execute('''
-                                DELETE FROM entries
-                                WHERE id = ? ''' , (row_id,))
-                print(colored(f"Entry {row_id} deleted", "green"))
+                cursor.execute('SELECT 1 FROM entries WHERE id = ?', (row_id,))
+                exists = cursor.fetchone()
+                if exists:
+                    cursor.execute('''
+                                    DELETE FROM entries
+                                    WHERE id = ? ''' , (row_id,))
+                    print(colored(f"Entry {row_id} deleted", "green"))
+                    print(cursor.fetchall())
+                else:
+                    print(colored("Entry with that ID does not exist.", "red"))
             except Exception as e:
                 print(colored(f"sqlite error occured, delete operation failed : {e}", "red"))
 
